@@ -197,6 +197,37 @@ async def recognize_face(
 
     return {"recognized_faces": recognized_faces}
 
+# @app.post("/add-face")
+# async def add_face(
+#     name: str = Form(...),
+#     employee_id: str = Form(...),
+#     file: UploadFile = File(...),
+#     db: Session = Depends(get_db)
+# ):
+#     # Read image
+#     image_bytes = await file.read()
+#     image = np.array(Image.open(io.BytesIO(image_bytes)))
+
+#     # Extract face encoding
+#     encodings = face_recognition.face_encodings(image)
+#     if not encodings:
+#         raise HTTPException(status_code=400, detail="No face found in the image.")
+
+#     encoding = encodings[0]
+#     encoding_blob = pickle.dumps(encoding)
+
+#     # Save to DB
+#     new_face = KnownFace(
+#         name=name,
+#         employee_id=employee_id,
+#         encoding=encoding_blob
+#     )
+#     db.add(new_face)
+#     db.commit()
+#     db.refresh(new_face)
+
+#     return {"message": "Face added successfully", "id": new_face.id}
+
 @app.post("/add-face")
 async def add_face(
     name: str = Form(...),
@@ -206,10 +237,14 @@ async def add_face(
 ):
     # Read image
     image_bytes = await file.read()
-    image = np.array(Image.open(io.BytesIO(image_bytes)))
+    image = Image.open(io.BytesIO(image_bytes))
+
+    # Ensure the image is in RGB format (important for face_recognition)
+    image = image.convert("RGB")
+    image_np = np.array(image)
 
     # Extract face encoding
-    encodings = face_recognition.face_encodings(image)
+    encodings = face_recognition.face_encodings(image_np)
     if not encodings:
         raise HTTPException(status_code=400, detail="No face found in the image.")
 
